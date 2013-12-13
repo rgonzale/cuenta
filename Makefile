@@ -1,4 +1,4 @@
-CFLAGS=-Wall -g3
+CFLAGS=-Wall -g3 -Wno-return-type
 
 all: main
 

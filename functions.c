@@ -38,34 +38,42 @@ char * parse(int *argc, char **argv) {
 	int i;
 	char s[1];
 
-	if (((*argc == 2) || (*argc == 3)) && ((*argv[1] == 'S') || (*argv[1] == 's'))) {
+	if (*argc < 2 || *argc > 4)
+		die();
 
-		if ((argv[2] != NULL) && (strchr("ibefmIBEFM", (*argv[2])) == NULL))
+	else if (*argv[1] == 's' || *argv[1] == 'S') {
+		if (argv[2] != NULL)   {
+			if (strchr("ibefmIBEFM", (*argv[2])) != NULL)
+				print_summary(argv[2]);
+			else
+				die();
+		}
+		else
 			print_summary(NULL);
-		else 
-			print_summary(argv[2]);
 	}
 
 	else if ((*argc) == 4) {
 
-		if (strchr("ibefmIBEFM", (*argv[1])) == NULL) 
-			die();
-
-		if ((strncpy(s, argv[2], 1)) == NULL)
-			die();
-
-		for (i = 0; i < strlen(argv[2]); i++)
+		if (strchr("ibefmIBEFM", (*argv[1])) != NULL) 
 		{
-			if (isdigit(s[i]) == 0)
+			if ((strncpy(s, argv[2], 1)) == NULL)
 				die();
+
+			for (i = 0; i < strlen(argv[2]); i++)
+			{
+				if (isdigit(s[i]) == 0)
+					die();
+			}
+
+			snprintf(query, 64, "insert into acct values(CURDATE(), \"%s\", %d, \"%s\")", 
+					argv[1], atoi(argv[2]), argv[3]);
+
+			return query;
 		}
-
-		snprintf(query, 64, "insert into acct values(CURDATE(), \"%s\", %d, \"%s\")"
-				, argv[1], atoi(argv[2]), argv[3]);
-
-		return query;
 	}
-	return NULL;
+
+	else
+		return NULL;
 }
 
 int get_month() {
@@ -98,6 +106,7 @@ int print_summary(char *category) {
 
 		mysql_stop();
 	}
+
 	else {
 
 		snprintf(query, 128, "select day, category, format(amount/100,2), description from acct where"
@@ -106,5 +115,6 @@ int print_summary(char *category) {
 		mysql_select(con, query);
 
 	}
+
 	return 0;
 }
