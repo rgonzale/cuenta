@@ -3,7 +3,7 @@
 //
 //  Tristan Gonzalez, acct, Accountant software that keeps track of your monthly costs
 //  Copyright (c) 2013 Tristan Gonzalez. All rights reserved.
-//  user@darkterminal.net
+//  rgonzale@darkterminal.net
 //
 
 #include <mysql/my_global.h>
@@ -14,7 +14,7 @@ MYSQL_RES *result;
 MYSQL_ROW row;
 int i, num_fields;
 
-int finish_with_error()
+int finish_with_error(MYSQL *con)
 {
    fprintf(stderr, "%s\n", mysql_error(con));
    mysql_close(con);
@@ -29,17 +29,22 @@ void get_mysql_version() {
 
 int mysql_start() 
 {
+	my_ulonglong last;
    if ((con = mysql_init(NULL)) == NULL)
       finish_with_error(con);
 
-   if (mysql_real_connect(con, "localhost", "user", "password", 
+   if (mysql_real_connect(con, "localhost", "rgonzale", "hotdog99", 
             "acct", 0, NULL, 0) == NULL) 
       finish_with_error(con);
+
+	  last = mysql_insert_id(con);
+	  printf("%llu\n", last);
+
 
    return 0;
 }
 
-int mysql_insert(const char *query)
+int mysql_insert(MYSQL *con, const char *query)
 {
    if (mysql_query(con, query))
       finish_with_error(con);
@@ -47,7 +52,7 @@ int mysql_insert(const char *query)
    return 0;
 }
 
-int mysql_select(const char *query)
+int mysql_select(MYSQL *con, const char *query)
 {
    if (mysql_query(con, query))
       finish_with_error(con);
@@ -110,4 +115,12 @@ int mysql_stop()
    mysql_close(con);
 
    return 0;
+}
+
+int mysql_balance()
+{
+
+}
+void main() {
+mysql_start();
 }

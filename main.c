@@ -6,17 +6,19 @@
 int main(int argc, char **argv) {
 
 	char *queryp;
+	long long amt;
 
-	queryp = parse(&argc, argv);
+	mysql_start();
 
-	if (queryp != NULL)
-	{
-		mysql_start();
+	sanitize(&argc, argv);
 
-		mysql_insert(con, queryp);
+	queryp = forge_query(&argc, argv);
 
-		mysql_stop();
-	}
+	mysql_insert(queryp);
+
+	balance(amt);
+
+	mysql_stop();
 
 	return 0;
 }

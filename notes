@@ -1,0 +1,1 @@
+mysql> select format((select sum(amount/100) from acct where category = 'i' and id > 2) - (select sum(amount/100) from acct where category REGEXP '[befm]' and id > 2),2);

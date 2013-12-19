@@ -13,18 +13,18 @@
 #include <time.h>
 #include "prototypes.h"
 
-#define BUFSIZE 64
+#define BUFSIZE 128
 
 char query[BUFSIZE];
 
 /* 
    Categories
 
-   I/i = Income
-   B/b = Bill(routine)
-   E/e = Expense(car maintenance, medical, etc)
-   F/f = Food/Grocery
-   M/m = Misc
+   i = Income
+   b = Bill(routine)
+   e = Expense(car maintenance, medical, etc)
+   f = Food/Grocery
+   m = Misc
 
 */
 
@@ -33,30 +33,34 @@ void die() {
 	exit(1);
 }
 
-char * parse(int *argc, char **argv) {
+int sanitize(int *argc, char **argv) {
 
 	int i;
-	char s[1];
+	char s[BUFSIZE];
 
 	if (*argc < 2 || *argc > 4)
 		die();
 
 	else if (*argv[1] == 's' || *argv[1] == 'S') {
 		if (argv[2] != NULL)   {
-			if (strchr("ibefmIBEFM", (*argv[2])) != NULL)
+			if (strchr("ibefm", (*argv[2])) != NULL) {
 				print_summary(argv[2]);
+				exit(0);
+			}
 			else
 				die();
 		}
-		else
+		else {
 			print_summary(NULL);
+			exit(0);
+		}
 	}
 
 	else if ((*argc) == 4) {
 
-		if (strchr("ibefmIBEFM", (*argv[1])) != NULL) 
+		if (strchr("ibefm", (*argv[1])) != NULL) 
 		{
-			if ((strncpy(s, argv[2], 1)) == NULL)
+			if ((strncpy(s, argv[2], 32)) == NULL)
 				die();
 
 			for (i = 0; i < strlen(argv[2]); i++)
@@ -65,15 +69,24 @@ char * parse(int *argc, char **argv) {
 					die();
 			}
 
-			snprintf(query, 64, "insert into acct values(CURDATE(), \"%s\", %d, \"%s\")", 
-					argv[1], atoi(argv[2]), argv[3]);
-
-			return query;
+			exit(0);
 		}
 	}
 
 	else
-		return NULL;
+		exit(0);
+}
+
+char * forge_query(int *argc, char **argv) {
+	my_ulonglong last;
+
+	last = mysql_insert_id(con);
+
+	snprintf(query, BUFSIZE, "insert into acct values(NULL, CURDATE(), \"%s\", %d, \"%s\")",
+			argv[1], atoi(argv[2]), argv[3]);
+
+	return query;
+
 }
 
 int get_month() {
@@ -93,28 +106,31 @@ int print_summary(char *category) {
 
 	printf("Printing Summary\n");
 
-	mysql_start();
-
 	if (category == NULL) {
 
-		mysql_select(con, "select day, category, format(amount/100,2), description from acct");
+		mysql_select("select day, category, format(amount/100,2), description from acct");
 
 		printf("Balance: ");
 
-		mysql_select(con, "select format((select sum(amount/100) from acct where category = 'I')"
+		mysql_select("select format((select sum(amount/100) from acct where category = 'I')"
 				"- (select sum(amount/100) from acct where category REGEXP '[BEFM]'),2);");
-
-		mysql_stop();
 	}
 
 	else {
 
-		snprintf(query, 128, "select day, category, format(amount/100,2), description from acct where"
+		snprintf(query, BUFSIZE, "select day, category, format(amount/100,2), description from acct where"
 				" category = '%s'", category);
 
-		mysql_select(con, query);
+		mysql_select(query);
 
 	}
 
 	return 0;
+}
+
+int balance(long long amt) {
+
+	
+	snprintf(query, BUFSIZE, "insert into balance values (%lld)", amt);
+
 }
