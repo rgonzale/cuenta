@@ -3,4 +3,4 @@ char * forge_query(int *argc, char **argv);
 void die();
 int get_month();
 int print_summary(char *category);
-int balance(long long);
+int balance(int *argc, char **argv);

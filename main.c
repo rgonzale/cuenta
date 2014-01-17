@@ -6,7 +6,6 @@
 int main(int argc, char **argv) {
 
 	char *queryp;
-	long long amt;
 
 	mysql_start();
 
@@ -16,7 +15,7 @@ int main(int argc, char **argv) {
 
 	mysql_insert(queryp);
 
-	balance(amt);
+	balance(&argc, argv);
 
 	mysql_stop();
 

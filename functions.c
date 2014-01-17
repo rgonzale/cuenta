@@ -107,30 +107,36 @@ int print_summary(char *category) {
 	printf("Printing Summary\n");
 
 	if (category == NULL) {
-
-		mysql_select("select day, category, format(amount/100,2), description from acct");
-
+		mysql_select("select id, day, upper(category), format(amount/100,2), description from acct");
 		printf("Balance: ");
-
-		mysql_select("select format((select sum(amount/100) from acct where category = 'I')"
-				"- (select sum(amount/100) from acct where category REGEXP '[BEFM]'),2);");
+		mysql_select("select amount from balance");
 	}
 
 	else {
-
-		snprintf(query, BUFSIZE, "select day, category, format(amount/100,2), description from acct where"
+		snprintf(query, BUFSIZE, "select id, day, upper(category), format(amount/100,2), description from acct where"
 				" category = '%s'", category);
-
 		mysql_select(query);
-
 	}
 
 	return 0;
 }
 
-int balance(long long amt) {
+int balance(int *argc, char **argv) {
 
-	
-	snprintf(query, BUFSIZE, "insert into balance values (%lld)", amt);
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	int num_fields;
+	long long amount;
+
+	mysql_query(con, "select amount from balance");
+	result = mysql_store_result(con);
+	num_fields = mysql_num_fields(result);
+	row = mysql_fetch_row(result);
+	printf("%s\n", row[0]);
+	mysql_free_result(result);
+
+	printf("%d\n", atoi(row[0]));
+
+	snprintf(query, BUFSIZE, "insert into balance values (%lld)", amount);
 
 }
