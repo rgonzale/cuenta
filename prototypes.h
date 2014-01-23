@@ -1,4 +1,4 @@
-int sanitize(int *argc, char **argv);
+int sanitize_input(int *argc, char **argv);
 char * forge_query(int *argc, char **argv);
 void die();
 int get_month();

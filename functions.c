@@ -33,7 +33,7 @@ void die() {
 	exit(1);
 }
 
-int sanitize(int *argc, char **argv) {
+int sanitize_input(int *argc, char **argv) {
 
 	int i;
 	char s[BUFSIZE];
