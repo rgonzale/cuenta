@@ -68,8 +68,6 @@ int sanitize_input(int *argc, char **argv) {
 				if (isdigit(s[i]) == 0)
 					die();
 			}
-
-			exit(0);
 		}
 	}
 
@@ -108,8 +106,8 @@ int print_summary(char *category) {
 
 	if (category == NULL) {
 		mysql_select("select id, day, upper(category), format(amount/100,2), description from acct");
-		printf("Balance: ");
-		mysql_select("select amount from balance");
+		printf("Balance: $");
+		mysql_select("select format(amount/100,2) from balance");
 	}
 
 	else {
@@ -128,15 +126,25 @@ int balance(int *argc, char **argv) {
 	int num_fields;
 	long long amount;
 
-	mysql_query(con, "select amount from balance");
+	mysql_query(con, "select format(amount/100,2) from balance");
 	result = mysql_store_result(con);
 	num_fields = mysql_num_fields(result);
 	row = mysql_fetch_row(result);
-	printf("%s\n", row[0]);
-	mysql_free_result(result);
 
-	printf("%d\n", atoi(row[0]));
+	if (row == 0) {
+		if (*argv[1] == 'i') {
+			amount = atoi(argv[2]);
+			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
+			mysql_insert(query);
+		}
+	}
+	else {
 
-	snprintf(query, BUFSIZE, "insert into balance values (%lld)", amount);
+		printf("%s\n", row[0]);
+		mysql_free_result(result);
+
+		printf("%d\n", atoi(row[0]));
+	}
+
 
 }

@@ -7,9 +7,9 @@ int main(int argc, char **argv) {
 
 	char *queryp;
 
-	mysql_start();
-
 	sanitize_input(&argc, argv);
+
+	mysql_start();
 
 	queryp = forge_query(&argc, argv);
 
