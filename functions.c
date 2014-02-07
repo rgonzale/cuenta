@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <strings.h>
 #include <time.h>
 #include "prototypes.h"
 
@@ -28,54 +29,48 @@ char query[BUFSIZE];
 
 */
 
-void die() {
+void die(char *error) 
+{
+	if (error)
+		fprintf(stderr, "Error: %s\n", error);
+
 	fprintf(stderr, "Usage acct <category> <amount> - make query\nUsage acct S - see summary\n");
 	exit(1);
 }
 
-int sanitize_input(int *argc, char **argv) {
-
+int sanitize_input(int *argc, char **argv)
+{
 	int i;
-	char s[BUFSIZE];
+	char comment[BUFSIZE];
+	bzero(comment, BUFSIZE);
 
 	if (*argc < 2 || *argc > 4)
-		die();
+		die("Arguments are too few or too many");
 
-	else if (*argv[1] == 's' || *argv[1] == 'S') {
-		if (argv[2] != NULL)   {
-			if (strchr("ibefm", (*argv[2])) != NULL) {
-				print_summary(argv[2]);
-				exit(0);
-			}
-			else
-				die();
-		}
-		else {
-			print_summary(NULL);
-			exit(0);
-		}
-	}
-
-	else if ((*argc) == 4) {
-
-		if (strchr("ibefm", (*argv[1])) != NULL) 
-		{
-			if ((strncpy(s, argv[2], 32)) == NULL)
-				die();
-
-			for (i = 0; i < strlen(argv[2]); i++)
-			{
-				if (isdigit(s[i]) == 0)
-					die();
-			}
-		}
-	}
-
-	else
+	if (*argv[1] == 's' || *argv[1] == 'S') {
+		print_summary(NULL);
 		exit(0);
+	}
+
+	if (argv[2] != NULL) {
+		if (strchr("ibefm", (*argv[1])) != NULL) {
+			for (i = 0; i < strlen(argv[2]); i++) {
+				if (isdigit(argv[2][i]) == 0)
+					die("amount contains non-numeric characters");
+				else if ((strncpy(comment, argv[3], BUFSIZE)) == NULL)
+					die("failed writing to comment");
+			}
+		}
+		else
+			die("char category not matched");
+
+	}
+	else 
+		die("amount and comment missing");	
 }
 
-char * forge_query(int *argc, char **argv) {
+char * forge_query(int *argc, char **argv)
+{
 	my_ulonglong last;
 
 	last = mysql_insert_id(con);
@@ -84,10 +79,10 @@ char * forge_query(int *argc, char **argv) {
 			argv[1], atoi(argv[2]), argv[3]);
 
 	return query;
-
 }
 
-int get_month() {
+int get_month()
+{
 	time_t now;
 	struct tm tm;
 
@@ -100,8 +95,8 @@ int get_month() {
 	return tm.tm_mon + 1;
 }
 
-int print_summary(char *category) {
-
+int print_summary(char *category)
+{
 	printf("Printing Summary\n");
 
 	if (category == NULL) {
@@ -119,8 +114,8 @@ int print_summary(char *category) {
 	return 0;
 }
 
-int balance(int *argc, char **argv) {
-
+int check_balance(int *argc, char **argv)
+{
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	int num_fields;
@@ -132,19 +127,77 @@ int balance(int *argc, char **argv) {
 	row = mysql_fetch_row(result);
 
 	if (row == 0) {
-		if (*argv[1] == 'i') {
+		if (strchr("ibefm", (*argv[1])) != NULL) {
 			amount = atoi(argv[2]);
 			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
 			mysql_insert(query);
 		}
 	}
-	else {
+}
 
-		printf("%s\n", row[0]);
+int calculate_balance(int *argc, char **argv) 
+{
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	int num_fields;
+	//long long amount;
+
+	mysql_query(con, "select format(amount/100,2) from balance");
+	result = mysql_store_result(con);
+	num_fields = mysql_num_fields(result);
+	row = mysql_fetch_row(result);
+
+/*
+	fprintf(stderr, "row: %d\n", row);
+
+		if (mysql_query(con, query))
+			finish_with_error(con);
+
+		result = mysql_store_result(con);
+
+		num_fields = mysql_num_fields(result);
+
+		while ((row = mysql_fetch_row(result)))
+		{
+			for(i = 0; i < num_fields; i++)
+			{
+				printf("%s ", row[i]);
+			}
+			printf("\n");
+		}
+
 		mysql_free_result(result);
-
-		printf("%d\n", atoi(row[0]));
-	}
-
-
+		*/
+	/*
+	   switch(*argv[1])
+	   {
+	   case 'i':
+	   amount = atoi(argv[2]);
+	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
+	   mysql_insert(query);
+	   break;
+	   case 'b':
+	   amount = atoi(argv[2]);
+	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
+	   mysql_insert(query);
+	   break;
+	   case 'e':
+	   amount = atoi(argv[2]);
+	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
+	   mysql_insert(query);
+	   break;
+	   case 'f':
+	   amount = atoi(argv[2]);
+	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
+	   mysql_insert(query);
+	   break;
+	   case 'm':
+	   amount = atoi(argv[2]);
+	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
+	   mysql_insert(query);
+	   break;
+	   default:
+	   break;
+	   }
+	   */
 }

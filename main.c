@@ -11,11 +11,13 @@ int main(int argc, char **argv) {
 
 	mysql_start();
 
+	check_balance(&argc, argv);
+
 	queryp = forge_query(&argc, argv);
 
 	mysql_insert(queryp);
 
-	balance(&argc, argv);
+	calculate_balance(&argc, argv);
 
 	mysql_stop();
 
