@@ -121,7 +121,7 @@ int check_balance(int *argc, char **argv)
 	int num_fields;
 	long long amount;
 
-	if (mysql_query(con, "select format(amount/100,2) from balance"))
+	if (mysql_query(con, "select amount from balance"))
 		finish_with_error(con);
 	result = mysql_store_result(con);
 	num_fields = mysql_num_fields(result);
@@ -142,12 +142,21 @@ int calculate_balance(int *argc, char **argv)
 	MYSQL_ROW row;
 	int num_fields;
 	long long amount;
+	char * date;
+	char query[BUFSIZE];
 
-	if (mysql_query(con, "select amount from balance where day=''"))
+	date = mysql_date();
+
+	snprintf(query, BUFSIZE, "select amount from balance where day=%s", date);
+
+	if (mysql_query(con, query))
 		finish_with_error(con);
 
 	result = mysql_store_result(con);
 	num_fields = mysql_num_fields(result);
+
+	fprintf(stderr, "starting calculate_balance()\n");
+	mysql_query(con, "select * from balance");
 
 	while ((row = mysql_fetch_row(result)))
 	{
@@ -158,7 +167,13 @@ int calculate_balance(int *argc, char **argv)
 		printf("\n");
 	}
 
+	//row = mysql_fetch_row(result);
+
+	//printf("%s\n", row[num_fields - 1]);
+
 	mysql_free_result(result);
+
+	fprintf(stderr, "ending calculate_balance()\n");
 
 	/*
 	   switch(*argv[1])

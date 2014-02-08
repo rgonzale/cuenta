@@ -78,10 +78,9 @@ char * mysql_date()
    result = mysql_store_result(con);
    num_fields = mysql_num_fields(result);
    row = mysql_fetch_row(result);
-   //printf("Value: %s\n", row[0]);
    mysql_free_result(result);
 
-   return &row[0];
+   return row[0];
 }
 
 int mysql_stop() 
