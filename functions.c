@@ -147,25 +147,35 @@ int calculate_balance(int *argc, char **argv)
 
 	date = mysql_date();
 
-	snprintf(query, BUFSIZE, "select amount from balance where day=%s", date);
+	snprintf(query, BUFSIZE, "select amount from balance where day='%s'", date);
 
 	if (mysql_query(con, query))
 		finish_with_error(con);
 
 	result = mysql_store_result(con);
-	num_fields = mysql_num_fields(result);
+	//num_fields = mysql_num_fields(result);
 
-	fprintf(stderr, "starting calculate_balance()\n");
-	mysql_query(con, "select * from balance");
+	fprintf(stderr, "assigning amount\n");
 
-	while ((row = mysql_fetch_row(result)))
-	{
-		for(i = 0; i < num_fields; i++)
-		{
-			printf("%s ", row[i]);
-		}
-		printf("\n");
+	if ((row = mysql_fetch_row(result)) == NULL) {
+		fprintf(stderr, "error from fetch\n");
+		finish_with_error(con);
 	}
+
+	fprintf(stderr, "%s\n", row[0]);
+	amount = atoll(row[0]);
+	printf("amount: %lld\n", amount);
+
+	/*
+	   while ((row = mysql_fetch_row(result)))
+	   {
+	   for(i = 0; i < num_fields; i++)
+	   {
+	   printf("%s ", row[i]);
+	   }
+	   printf("\n");
+	   }
+	   */
 
 	//row = mysql_fetch_row(result);
 
@@ -206,5 +216,5 @@ int calculate_balance(int *argc, char **argv)
 	   default:
 	   break;
 	   }
-	 */
+	   */
 }
