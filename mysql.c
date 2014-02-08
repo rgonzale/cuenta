@@ -70,7 +70,7 @@ int mysql_select(const char *query)
    return 0;
 }
 
-char ** mysql_date()
+char * mysql_date()
 {
    if (mysql_query(con, "select CURDATE()"))
       finish_with_error(con);
@@ -81,7 +81,7 @@ char ** mysql_date()
    //printf("Value: %s\n", row[0]);
    mysql_free_result(result);
 
-   return row[0];
+   return &row[0];
 }
 
 int mysql_stop() 
