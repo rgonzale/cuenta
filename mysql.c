@@ -70,39 +70,18 @@ int mysql_select(const char *query)
    return 0;
 }
 
-int mysql_date()
+char ** mysql_date()
 {
-   char *buf;
-   char query[38];
-
-   if (mysql_query(con, "select day from acct where amount=1002"))
+   if (mysql_query(con, "select CURDATE()"))
       finish_with_error(con);
 
    result = mysql_store_result(con);
    num_fields = mysql_num_fields(result);
    row = mysql_fetch_row(result);
-   printf("Number of fields: %d\n", num_fields);
-   printf("Value: %s\n", row[0]);
-   mysql_free_result(result);
-   buf = row[0];
-
-   snprintf(query, 38, "select extract(month from %s)", buf); 
-
-   if (mysql_query(con, query))
-         finish_with_error(con);
-
-   /*
-   if (mysql_query(con, printf("select extract(month from %s)", buf)))
-         finish_with_error(con);
-   */
-
-   result = mysql_store_result(con);
-   num_fields = mysql_num_fields(result);
-   row = mysql_fetch_row(result);
-   printf("Value: %s\n", row[0]);
+   //printf("Value: %s\n", row[0]);
    mysql_free_result(result);
 
-   return 0;
+   return row[0];
 }
 
 int mysql_stop() 

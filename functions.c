@@ -141,9 +141,9 @@ int calculate_balance(int *argc, char **argv)
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	int num_fields;
-	//long long amount;
+	long long amount;
 
-	if (mysql_query(con, "select format(amount/100,2) from balance"))
+	if (mysql_query(con, "select amount from balance where day=''"))
 		finish_with_error(con);
 
 	result = mysql_store_result(con);

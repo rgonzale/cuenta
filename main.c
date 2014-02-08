@@ -11,6 +11,8 @@ int main(int argc, char **argv) {
 
 	mysql_start();
 
+	mysql_date();
+/*
 	check_balance(&argc, argv);
 
 	queryp = forge_query(&argc, argv);
@@ -18,7 +20,7 @@ int main(int argc, char **argv) {
 	mysql_insert(queryp);
 
 	calculate_balance(&argc, argv);
-
+*/
 	mysql_stop();
 
 	return 0;
