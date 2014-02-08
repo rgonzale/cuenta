@@ -121,7 +121,8 @@ int check_balance(int *argc, char **argv)
 	int num_fields;
 	long long amount;
 
-	mysql_query(con, "select format(amount/100,2) from balance");
+	if (mysql_query(con, "select format(amount/100,2) from balance"))
+		finish_with_error(con);
 	result = mysql_store_result(con);
 	num_fields = mysql_num_fields(result);
 	row = mysql_fetch_row(result);
@@ -142,32 +143,23 @@ int calculate_balance(int *argc, char **argv)
 	int num_fields;
 	//long long amount;
 
-	mysql_query(con, "select format(amount/100,2) from balance");
+	if (mysql_query(con, "select format(amount/100,2) from balance"))
+		finish_with_error(con);
+
 	result = mysql_store_result(con);
 	num_fields = mysql_num_fields(result);
-	row = mysql_fetch_row(result);
 
-/*
-	fprintf(stderr, "row: %d\n", row);
-
-		if (mysql_query(con, query))
-			finish_with_error(con);
-
-		result = mysql_store_result(con);
-
-		num_fields = mysql_num_fields(result);
-
-		while ((row = mysql_fetch_row(result)))
+	while ((row = mysql_fetch_row(result)))
+	{
+		for(i = 0; i < num_fields; i++)
 		{
-			for(i = 0; i < num_fields; i++)
-			{
-				printf("%s ", row[i]);
-			}
-			printf("\n");
+			printf("%s ", row[i]);
 		}
+		printf("\n");
+	}
 
-		mysql_free_result(result);
-		*/
+	mysql_free_result(result);
+
 	/*
 	   switch(*argv[1])
 	   {
@@ -199,5 +191,5 @@ int calculate_balance(int *argc, char **argv)
 	   default:
 	   break;
 	   }
-	   */
+	 */
 }
