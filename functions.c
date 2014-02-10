@@ -1,7 +1,7 @@
 //
 //  functions.c
 //
-//  Tristan Gonzalez, acct, Accountant software that keeps track of your monthly costs
+//  Tristan Gonzalez, cuentame, Accountant software that keeps track of your monthly costs
 //  Copyright (c) 2013 Tristan Gonzalez. All rights reserved.
 //  rgonzale@darkterminal.net
 //
@@ -34,7 +34,16 @@ void die(char *error)
 	if (error)
 		fprintf(stderr, "Error: %s\n", error);
 
-	fprintf(stderr, "Usage acct <category> <amount> - make query\nUsage acct S - see summary\n");
+	fprintf(stderr, "Usage: cuentame <category> <amount> - insert record\n"
+	"Categories\n\n"
+	"i = Income\n"
+	"b = Bill(routine)\n"
+	"e = Expense(car maintenance, medical, etc)\n"
+	"f = Food/Grocery/Palenque\n"
+	"m = Misc\n\n"
+	"Usage: cuentame s - see summary\n"
+	"Usage: cuentame s <category> - see summary by sorted by category\n"
+	);
 	exit(1);
 }
 
@@ -47,34 +56,32 @@ int sanitize_input(int *argc, char **argv)
 	if (*argc < 2 || *argc > 4)
 		die("Arguments are too few or too many");
 
-	if (*argv[1] == 's' || *argv[1] == 'S') {
-		print_summary(NULL);
-		exit(0);
-	}
-
-	if (argv[2] != NULL) {
-		if (strchr("ibefm", (*argv[1])) != NULL) {
-			for (i = 0; i < strlen(argv[2]); i++) {
-				if (isdigit(argv[2][i]) == 0)
-					die("amount contains non-numeric characters");
-				else if ((strncpy(comment, argv[3], BUFSIZE)) == NULL)
-					die("failed writing to comment");
-			}
+	if (argv[2]) {
+		if (*argv[1] == 's') {
+			if (strchr("ibefms", (*argv[2])) == NULL)
+				die("summary category match failed");
 		}
-		else
-			die("char category not matched");
-
+		else {
+			if (strchr("ibefms", (*argv[1])) != NULL) {
+				for (i = 0; i < strlen(argv[2]); i++) {
+					if (isdigit(argv[2][i]) == 0)
+						die("amount contains non-numeric characters");
+					else if ((strncpy(comment, argv[3], BUFSIZE)) == NULL)
+						die("failed writing to comment");
+				}
+			}
+			else
+				die("char category not matched");
+		}
 	}
-	else 
-		die("amount and comment missing");	
+	else {
+		if (*argv[1] != 's')
+			die(NULL);
+	}
 }
 
 char * forge_query(int *argc, char **argv)
 {
-	my_ulonglong last;
-
-	last = mysql_insert_id(con);
-
 	snprintf(query, BUFSIZE, "insert into acct values(NULL, CURDATE(), \"%s\", %d, \"%s\")",
 			argv[1], atoi(argv[2]), argv[3]);
 
@@ -98,18 +105,25 @@ int get_month()
 int print_summary(char *category)
 {
 	printf("Printing Summary\n");
+	mysql_start();
 
-	if (category == NULL) {
-		mysql_select("select id, day, upper(category), format(amount/100,2), description from acct");
-		printf("Balance: $");
-		mysql_select("select format(amount/100,2) from balance");
-	}
-
-	else {
+	if (category) {
 		snprintf(query, BUFSIZE, "select id, day, upper(category), format(amount/100,2), description from acct where"
 				" category = '%s'", category);
 		mysql_select(query);
+		printf("Total: $");
+		snprintf(query, BUFSIZE, "select sum(format(amount/100,2)) from acct where"
+				" category = '%s'", category);
+		mysql_select(query);
 	}
+	else {
+		mysql_select("select id, day, upper(category), format(amount/100,2), description from acct");
+		printf("Balance: $");
+		mysql_select_last("select format(amount/100,2) from balance");
+		printf("\n");
+	}
+
+	mysql_stop();
 
 	return 0;
 }
@@ -117,23 +131,26 @@ int print_summary(char *category)
 int check_balance(int *argc, char **argv)
 {
 	MYSQL_RES *result;
-	MYSQL_ROW row;
-	int num_fields;
+	unsigned long long num_rows;
 	long long amount;
 
 	if (mysql_query(con, "select amount from balance"))
 		finish_with_error(con);
-	result = mysql_store_result(con);
-	num_fields = mysql_num_fields(result);
-	row = mysql_fetch_row(result);
 
-	if (row == 0) {
+	if ((result = mysql_store_result(con)) == 0)
+		finish_with_error(con);
+
+	if ((num_rows = mysql_num_rows(result)) == 0) {
 		if (strchr("ibefm", (*argv[1])) != NULL) {
 			amount = atoi(argv[2]);
 			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
 			mysql_insert(query);
 		}
+
+		return 0;
 	}
+
+	return 1;
 }
 
 int calculate_balance(int *argc, char **argv) 
@@ -143,7 +160,6 @@ int calculate_balance(int *argc, char **argv)
 	my_ulonglong num_rows;
 	unsigned long long balance_amount = 0, amount = 0;
 	char * date;
-	char query[BUFSIZE];
 
 	date = mysql_date();
 
@@ -155,8 +171,7 @@ int calculate_balance(int *argc, char **argv)
 	if ((result = mysql_store_result(con)) == 0)
 		finish_with_error(con);
 
-	if ((num_rows = mysql_num_rows(result)) == 0)
-		finish_with_error(con);
+	num_rows = mysql_num_rows(result);
 
 	mysql_data_seek(result, num_rows - 1);
 

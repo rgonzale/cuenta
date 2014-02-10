@@ -12,6 +12,7 @@
 MYSQL *con;
 MYSQL_RES *result;
 MYSQL_ROW row;
+unsigned long long num_rows;
 int i, num_fields;
 
 int finish_with_error()
@@ -58,7 +59,8 @@ int mysql_select(const char *query)
 	if (mysql_query(con, query))
 		finish_with_error(con);
 
-	result = mysql_store_result(con);
+  if ((result = mysql_store_result(con)) == 0)
+          finish_with_error(con);
 
 	num_fields = mysql_num_fields(result);
 
@@ -76,14 +78,40 @@ int mysql_select(const char *query)
 	return 0;
 }
 
+int mysql_select_last(const char *query)
+{
+	if (mysql_query(con, query))
+		finish_with_error(con);
+
+	if ((result = mysql_store_result(con)) == 0)
+		finish_with_error(con);
+
+	num_rows = mysql_num_rows(result);
+
+	mysql_data_seek(result, num_rows - 1);
+
+	if ((row = mysql_fetch_row(result)) == NULL) {
+		fprintf(stderr, "error from fetch\n");
+		finish_with_error(con);
+	}
+
+	printf("%s", (row[0]));
+
+	mysql_free_result(result);
+
+	return 0;
+}
+
 char * mysql_date()
 {
 	if (mysql_query(con, "select CURDATE()"))
 		finish_with_error(con);
 
-	result = mysql_store_result(con);
-	num_fields = mysql_num_fields(result);
+	if ((result = mysql_store_result(con)) == 0)
+		finish_with_error(con);
+
 	row = mysql_fetch_row(result);
+
 	mysql_free_result(result);
 
 	return row[0];

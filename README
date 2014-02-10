@@ -1,0 +1,32 @@
+Assumes there is a mysql user and a database that is accessible via localhost or socket and that of course the MySQL server is running.
+In addition to the MySQL server(mysql-server) and client(mysql), you need to make sure that you have the following packages installed:
+
+mysql-devel
+mysql-libs
+
+If not make sure to create them using the root user.
+
+create user '<user>'@'localhost' identified by '<password>';
+create database <databasename>
+grant all on <databasename>.* to '<user>'@'localhost';
+
+Do not forget to enter your user and password in the mysql.c file before you compile.
+
+The following script will create the necessary tables.
+
+#!/bin/bash
+
+	mysql <databasename> -e 'CREATE TABLE `acct` (
+			`id` bigint(20) NOT NULL AUTO_INCREMENT,
+			`day` date DEFAULT NULL,
+			`category` char(1) DEFAULT NULL,
+			`amount` int(11) DEFAULT NULL,
+			`description` char(64) DEFAULT NULL,
+			PRIMARY KEY (`id`)
+			) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=latin1'
+	mysql <databasename> -e 'CREATE TABLE `balance` (
+			`day` date DEFAULT NULL,
+			`amount` bigint(20) NOT NULL
+			) ENGINE=MyISAM DEFAULT CHARSET=latin1'
+
+** replace <databasename> and <user> with your info

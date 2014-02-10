@@ -6,18 +6,25 @@
 int main(int argc, char **argv) {
 
 	char *queryp;
+	int bool_balance;
 
 	sanitize_input(&argc, argv);
 
+	if (argv[1][0] == 's') {
+		print_summary(argv[2]);
+		exit(0);
+	}
+
 	mysql_start();
 
-	check_balance(&argc, argv);
+	bool_balance = check_balance(&argc, argv);
 
 	queryp = forge_query(&argc, argv);
 
 	mysql_insert(queryp);
 
-	calculate_balance(&argc, argv);
+	if (bool_balance)
+		calculate_balance(&argc, argv);
 
 	mysql_stop();
 
