@@ -140,8 +140,8 @@ int calculate_balance(int *argc, char **argv)
 {
 	MYSQL_RES *result;
 	MYSQL_ROW row;
-	int num_fields;
-	long long amount;
+	my_ulonglong num_rows;
+	unsigned long long balance_amount = 0, amount = 0;
 	char * date;
 	char query[BUFSIZE];
 
@@ -152,69 +152,51 @@ int calculate_balance(int *argc, char **argv)
 	if (mysql_query(con, query))
 		finish_with_error(con);
 
-	result = mysql_store_result(con);
-	//num_fields = mysql_num_fields(result);
+	if ((result = mysql_store_result(con)) == 0)
+		finish_with_error(con);
 
-	fprintf(stderr, "assigning amount\n");
+	if ((num_rows = mysql_num_rows(result)) == 0)
+		finish_with_error(con);
+
+	mysql_data_seek(result, num_rows - 1);
 
 	if ((row = mysql_fetch_row(result)) == NULL) {
 		fprintf(stderr, "error from fetch\n");
 		finish_with_error(con);
 	}
 
-	fprintf(stderr, "%s\n", row[0]);
-	amount = atoll(row[0]);
-	printf("amount: %lld\n", amount);
-
-	/*
-	   while ((row = mysql_fetch_row(result)))
-	   {
-	   for(i = 0; i < num_fields; i++)
-	   {
-	   printf("%s ", row[i]);
-	   }
-	   printf("\n");
-	   }
-	   */
-
-	//row = mysql_fetch_row(result);
-
-	//printf("%s\n", row[num_fields - 1]);
+	balance_amount = atoll(row[0]);
 
 	mysql_free_result(result);
 
-	fprintf(stderr, "ending calculate_balance()\n");
-
-	/*
-	   switch(*argv[1])
-	   {
-	   case 'i':
-	   amount = atoi(argv[2]);
-	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
-	   mysql_insert(query);
-	   break;
-	   case 'b':
-	   amount = atoi(argv[2]);
-	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
-	   mysql_insert(query);
-	   break;
-	   case 'e':
-	   amount = atoi(argv[2]);
-	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
-	   mysql_insert(query);
-	   break;
-	   case 'f':
-	   amount = atoi(argv[2]);
-	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
-	   mysql_insert(query);
-	   break;
-	   case 'm':
-	   amount = atoi(argv[2]);
-	   snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", amount);
-	   mysql_insert(query);
-	   break;
-	   default:
-	   break;
-	   }
-	   */
+	switch(*argv[1])
+	{
+		case 'i':
+			amount = atoll(argv[2]);
+			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", balance_amount + amount);
+			mysql_insert(query);
+			break;
+		case 'b':
+			amount = atoll(argv[2]);
+			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", balance_amount - amount);
+			mysql_insert(query);
+			break;
+		case 'e':
+			amount = atoll(argv[2]);
+			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", balance_amount - amount);
+			mysql_insert(query);
+			break;
+		case 'f':
+			amount = atoll(argv[2]);
+			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", balance_amount - amount);
+			mysql_insert(query);
+			break;
+		case 'm':
+			amount = atoll(argv[2]);
+			snprintf(query, BUFSIZE, "insert into balance values (CURDATE(), %lld)", balance_amount - amount);
+			mysql_insert(query);
+			break;
+		default:
+			break;
+	}
 }
